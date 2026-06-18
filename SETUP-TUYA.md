@@ -1,52 +1,59 @@
-# Como vincular o PCUIRN na Tuya Cloud
+# Tuya IoT Cloud setup (optional)
 
-## O problema mais comum
+> **You probably don't need this.** Cloud IR control (TV, AC, API, MCP) only requires `POSITIVO_EMAIL` and `POSITIVO_PASSWORD` in `.env`.
+>
+> Use this guide only if you want **local LAN control** (`probe.js`, `/api/local/status`) and `node positivo.js` did not return a `localKey`.
 
-O portal **iot.tuya.com NÃO vincula o app "Positivo Casa Inteligente"** diretamente.
+---
 
-Ele só aceita escanear QR com:
-- **Smart Life** (recomendado)
+## The common gotcha
+
+The [iot.tuya.com](https://iot.tuya.com) portal does **not** link the **Positivo Casa Inteligente** app directly.
+
+QR linking only works with:
+- **Smart Life** (recommended)
 - **Tuya Smart**
 
-O PCUIRN é Tuya por baixo — funciona nos dois apps. Você pode **manter no app Positivo** e **também adicionar no Smart Life** com a mesma conta/e-mail, ou migrar o dispositivo pro Smart Life só pra pegar as credenciais.
+The PCUIRN is Tuya hardware underneath — it works in both apps. You can keep using the Positivo app and **also** add the device in Smart Life with the same email, or pair it in Smart Life only to fetch credentials.
 
 ---
 
-## Passo 1 — Criar conta no portal
+## Step 1 — Create a portal account
 
-1. Acesse https://iot.tuya.com
-2. **Register** / cadastre-se (pode ser com o mesmo e-mail do app)
-3. Confirme o e-mail se pedir
-
----
-
-## Passo 2 — Assinar o plano IoT Core (obrigatório)
-
-Sem isso a API não funciona e algumas telas ficam bloqueadas.
-
-1. Menu esquerdo: **Cloud** → **Cloud Project** (ou **Pricing**)
-2. Procure **IoT Core** / **Upgrade IoT Core Plan**
-3. Ative o plano **gratuito** (Free / Trial) se disponível
+1. Go to https://iot.tuya.com
+2. **Register** (same email as the app is fine)
+3. Confirm your email if prompted
 
 ---
 
-## Passo 3 — Criar o projeto
+## Step 2 — Subscribe to IoT Core (required)
+
+Without this, the API won't work and some screens stay locked.
+
+1. Left menu: **Cloud** → **Cloud Project** (or **Pricing**)
+2. Find **IoT Core** / **Upgrade IoT Core Plan**
+3. Enable the **free** plan (Free / Trial) if available
+
+---
+
+## Step 3 — Create the project
 
 1. **Cloud** → **Cloud Project** → **Project Management**
 2. **Create Cloud Project**
-3. Preencha:
-   - **Project Name**: qualquer (ex: `pcuirn`)
-   - **Development Method**: **Smart Home** ← obrigatório
-   - **Data Center**: **Western America** ← **Brasil usa este, NÃO Europa!**
+3. Fill in:
+   - **Project Name**: anything (e.g. `pcuirn`)
+   - **Development Method**: **Smart Home** ← required
+   - **Data Center**: **Western America** ← **Brazil uses this, NOT Europe!**
 4. **Create**
 
-### Pegar Access ID e Secret
+### Get Access ID and Secret
 
-Dentro do projeto → aba **Overview** → seção **Authorization Key**:
-- **Access ID** (ou Client ID) → `TUYA_ACCESS_ID`
-- **Access Secret** (ou Client Secret) → `TUYA_ACCESS_SECRET`
+Inside the project → **Overview** tab → **Authorization Key**:
+- **Access ID** (or Client ID) → `TUYA_ACCESS_ID`
+- **Access Secret** (or Client Secret) → `TUYA_ACCESS_SECRET`
 
-No `.env`:
+Add to `.env`:
+
 ```env
 TUYA_ACCESS_ID=...
 TUYA_ACCESS_SECRET=...
@@ -55,92 +62,95 @@ TUYA_REGION=us
 
 ---
 
-## Passo 4 — Fechar o assistente (muita gente trava aqui!)
+## Step 4 — Close the wizard (many people get stuck here!)
 
-Se aparecer um **wizard/assistente** no topo da página do projeto:
+If a **Configuration Wizard** / **Quick Start** banner appears at the top:
 
-> *"Configuration Wizard" / "Quick Start"*
-
-**Feche ele** (X ou "Skip"). O menu **Devices** com opção de vincular conta **só aparece depois** de sair do wizard.
+**Close it** (X or "Skip"). The **Devices** tab with account linking **only appears after** leaving the wizard.
 
 ---
 
-## Passo 5 — Vincular conta do app
+## Step 5 — Link the app account
 
-### Caminho na interface nova (2024+)
+### New UI (2024+)
 
-1. Entre no seu projeto
-2. Aba **Devices**
-3. **Link App Account** (ou **Link Tuya App Account**)
+1. Open your project
+2. **Devices** tab
+3. **Link App Account** (or **Link Tuya App Account**)
 4. **Add App Account**
-5. Escolha **Tuya App Account Authorization**
-6. Aparece um **QR Code**
+5. Choose **Tuya App Account Authorization**
+6. A **QR Code** appears
 
-### Caminho alternativo (interface antiga)
+### Old UI
 
 1. **Cloud** → **Development** → **My Cloud Projects**
-2. Clique no projeto → aba **Devices**
+2. Click your project → **Devices** tab
 3. **Link Tuya App Account** → **Add App Account**
 
 ---
 
-## Passo 6 — Escanear com Smart Life (não com Positivo!)
+## Step 6 — Scan with Smart Life (not Positivo!)
 
-1. Instale **Smart Life** (App Store / Play Store)
-2. Crie conta com o **mesmo e-mail** ou adicione o PCUIRN no Smart Life:
-   - **+** → adicionar dispositivo → **Infravermelho** / IR
-   - Ou: se já estiver no Positivo, às vezes aparece ao logar com mesma conta Tuya
-3. No Smart Life: **Perfil (Me)** → ícone de **scan/QR** (canto superior)
-4. Escaneie o QR do portal
-5. Toque **Confirm** / **Confirmar login**
+1. Install **Smart Life** (App Store / Play Store)
+2. Sign in with the **same email**, or add the PCUIRN in Smart Life:
+   - **+** → add device → **Infrared** / IR
+   - Or: if already in Positivo, it may appear when logging in with the same Tuya account
+3. In Smart Life: **Profile (Me)** → **scan/QR** icon (top corner)
+4. Scan the portal QR code
+5. Tap **Confirm**
 
-Depois no portal:
+Then on the portal:
 - **Device linking method**: **Automatic Link**
 - **Permission**: **Read, Write, and Manage**
 - **OK**
 
 ---
 
-## Passo 7 — Ver se o dispositivo apareceu
+## Step 7 — Confirm the device appeared
 
-1. Mesma aba **Devices** → **All Devices**
-2. Deve listar o PCUIRN
+1. Same **Devices** tab → **All Devices**
+2. The PCUIRN should be listed
 
-Se **não aparecer**:
-- Confirme **Data Center = Western America** (Brasil)
-- No Smart Life: **Me** → **Settings** → **Account and Security** → veja o **Region** (deve bater com US/Western America)
-- A conta só pode estar em **2 projetos** — desvincule de outro projeto se necessário
-- Tente trocar o data center no canto superior direito do portal
+If it **doesn't appear**:
+- Confirm **Data Center = Western America** (Brazil)
+- In Smart Life: **Me** → **Settings** → **Account and Security** → check **Region** (must match US/Western America)
+- An account can only be linked to **2 projects** — unlink from another project if needed
+- Try switching data center in the portal's top-right corner
 
 ---
 
-## Passo 8 — Rodar nosso script
+## Step 8 — Run the script
 
 ```bash
-cp .env.example .env
-# cola Access ID, Secret, TUYA_REGION=us
-
 node cloud.js
 ```
 
+Copy the printed `DEVICE_ID`, `DEVICE_LOCAL_KEY`, and `DEVICE_IP` into `.env`, then test:
+
+```bash
+node probe.js
+```
+
+> Close the Positivo app on your phone before `probe.js` — only one local connection at a time.
+
 ---
 
-## Alternativa: pegar local_key pelo API Explorer
+## Alternative: get local_key via API Explorer
 
-Se vinculou mas o `cloud.js` não mostra a `localKey`:
+If linking worked but `cloud.js` doesn't show `localKey`:
 
 1. Portal → **Cloud** → **API Explorer**
-2. **Device Management** → **Get Device Details** (ou *Query Device Details in Bulk*)
-3. Cole o `device_id` do PCUIRN
-4. **Submit** → no JSON vem `"local_key": "..."`
+2. **Device Management** → **Get Device Details** (or *Query Device Details in Bulk*)
+3. Paste the PCUIRN `device_id`
+4. **Submit** → JSON includes `"local_key": "..."`
 
 ---
 
-## Resumo rápido
+## Quick reference (Brazil)
 
-| Item | Valor para Brasil |
-|------|-------------------|
-| Data Center no portal | **Western America** |
-| `TUYA_REGION` no .env | **us** |
-| App pra escanear QR | **Smart Life** (não Positivo) |
-| URL da API | `https://openapi.tuyaus.com` |
+| Item | Value |
+|------|-------|
+| Portal data center | **Western America** |
+| `TUYA_REGION` in `.env` | **us** |
+| App to scan QR | **Smart Life** (not Positivo) |
+| API URL | `https://openapi.tuyaus.com` |

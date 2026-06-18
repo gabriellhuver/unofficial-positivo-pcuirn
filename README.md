@@ -6,6 +6,11 @@ The device is a Tuya-based IR blaster. This project reverse-engineers the **Posi
 
 > **Disclaimer:** This is an unofficial community project. It is not affiliated with Positivo or Tuya. Use at your own risk.
 
+### TL;DR
+
+1. **Setup:** `npm install` → copy `.env.example` → paste Positivo app **email + password** → configure MCP in Cursor (once)
+2. **Use:** open Cursor chat and say *"liga o ar no 23"* or *"turn on the TV"* — done. No `npm start`, no device IDs, no Tuya Cloud.
+
 ---
 
 ## What works
@@ -28,19 +33,92 @@ The device is a Tuya-based IR blaster. This project reverse-engineers the **Posi
 
 ---
 
-## Quick start
+## Setup (5 minutes)
+
+### What you actually need
+
+| `.env` variable | Required? | Used for |
+|-----------------|-----------|----------|
+| `POSITIVO_EMAIL` | **Yes** | Login to Positivo API |
+| `POSITIVO_PASSWORD` | **Yes** | Login to Positivo API |
+| `DEVICE_ID` | No | Local LAN only (`probe.js`, `/api/local/status`) |
+| `DEVICE_LOCAL_KEY` | No | Local LAN only |
+| `DEVICE_IP` | No | Local LAN only |
+| `TUYA_ACCESS_ID` / `TUYA_ACCESS_SECRET` | No | Alternative way to get `localKey` — see [SETUP-TUYA.md](SETUP-TUYA.md) |
+
+**Cloud control (TV, AC, API, web UI, MCP) only needs your Positivo app email and password.** No Tuya IoT Cloud developer account, no Smart Life, no `iot.tuya.com` project.
+
+The PCUIRN must already be paired in the Positivo app with your IR remotes (TV, AC, etc.) configured.
+
+### Quick start
 
 ```bash
+git clone https://github.com/YOUR_USER/positivo-pcuirn.git
+cd positivo-pcuirn
+
 npm install
 cp .env.example .env
-# Edit .env with your Positivo credentials
-
-node positivo.js          # login + list devices → fills devices.json locally
-# Copy DEVICE_ID, DEVICE_LOCAL_KEY, DEVICE_IP into .env
-
-npm run build             # install + build frontend
-npm start                 # API + UI at http://localhost:3000
 ```
+
+Edit `.env` — only these two lines are required:
+
+```env
+POSITIVO_EMAIL=your@email.com
+POSITIVO_PASSWORD=your_app_password
+```
+
+Then:
+
+```bash
+npm run build    # install + build frontend (first time only)
+npm start        # API + UI → http://localhost:3000
+```
+
+Test from another terminal:
+
+```bash
+# Health check
+curl http://localhost:3000/api/health
+
+# List IR remotes (TV, AC…)
+curl http://localhost:3000/api/remotes
+
+# Turn on TV
+curl -X POST http://localhost:3000/api/tv/send \
+  -H "Content-Type: application/json" \
+  -d '{"command":"power"}'
+
+# AC at 23°C (cool, auto fan)
+curl -X POST http://localhost:3000/api/ac/send \
+  -H "Content-Type: application/json" \
+  -d '{"action":"set","mode":0,"temp":23,"fan":0}'
+```
+
+On first run, login happens automatically and the session is saved to `storage/session.json` (gitignored). You don't need to run any other setup script.
+
+### Optional: device ID / localKey (local LAN only)
+
+**Skip this** if you only use cloud control (TV, AC, Cursor, web UI).
+
+One command does everything — login, list devices, print `.env` lines, save cache:
+
+```bash
+node positivo.js
+```
+
+Look for **Smart Controle Universal 2** (`productId: lwpag3bu0faaowlj`). Copy the printed lines into `.env` only if you need local control (`probe.js`).
+
+If IP is missing, run `node discover.js` to find it on your Wi-Fi.
+
+You do **not** need Tuya IoT Cloud (`iot.tuya.com`) for normal use — see [SETUP-TUYA.md](SETUP-TUYA.md) only as a last resort.
+
+### Cursor MCP (one-time)
+
+1. **Cursor Settings → MCP** → add server (see `mcp/cursor-mcp.example.json`)
+2. Set the **absolute path** to `mcp/server.js`
+3. Restart Cursor
+
+The MCP server uses the same `.env` (email + password). **`npm start` does not need to be running** for Cursor control.
 
 ### Development (split API + UI)
 
@@ -50,6 +128,59 @@ npm run dev
 
 # Terminal 2
 npm run frontend:dev      # http://localhost:5173 (proxies to API)
+```
+
+---
+
+## How to use
+
+After setup, pick how you want to control things. **No device IDs, no curl, no Tuya Cloud** required for the options below.
+
+### 1. Cursor / Claude — just ask (recommended)
+
+With MCP configured, talk to the AI in normal language. It calls the tools and sends IR commands over the cloud.
+
+**You don't need `npm start` running.** Only `.env` with email + password.
+
+Examples (Portuguese or English — both work):
+
+| You say | What happens |
+|---------|----------------|
+| *"Liga o ar no 23"* | AC on, cool mode, 23°C |
+| *"Desliga o ar"* | AC off |
+| *"Coloca o ar em 16 graus"* | Sets temperature to 16°C |
+| *"Liga a TV"* | TV power |
+| *"Aumenta o volume da TV"* | Volume up |
+| *"Turn on the AC at 23 degrees"* | Same as above |
+| *"Mute the TV"* | TV mute |
+
+The agent picks the right MCP tool (`ac_set_temperature`, `tv_power`, etc.) automatically. You never type tool names yourself.
+
+If something fails, check that MCP is enabled in Cursor and `.env` has the correct Positivo credentials.
+
+### 2. Web UI
+
+```bash
+npm start
+```
+
+Open **http://localhost:3000** — buttons for TV and AC (mode, temperature, fan).
+
+### 3. API / curl / scripts
+
+With `npm start` running:
+
+```bash
+curl -X POST http://localhost:3000/api/ac/send \
+  -H "Content-Type: application/json" \
+  -d '{"action":"set","mode":0,"temp":23,"fan":0}'
+```
+
+Or without the server:
+
+```bash
+node test-control.js send TV power
+node test-control.js send "Ar condicionado" "power off"
 ```
 
 ---
@@ -147,9 +278,9 @@ This mapping is in `lib/commands.js`.
 
 **LAN discovery:** `node discover.js` broadcasts on Tuya UDP ports `6666`/`6667` to find devices on your Wi-Fi.
 
-### 9. Alternative: Tuya IoT Cloud
+### 9. Alternative: Tuya IoT Cloud (optional, rarely needed)
 
-If `localKey` is missing from the Positivo API, you can link the app to a [Tuya IoT Cloud](https://iot.tuya.com) project and run `node cloud.js` with `TUYA_ACCESS_ID` / `TUYA_ACCESS_SECRET`. This is optional.
+Only for **local LAN** control when `node positivo.js` does not return a `localKey`. Cloud IR does **not** use this. See [SETUP-TUYA.md](SETUP-TUYA.md).
 
 ---
 
@@ -195,17 +326,13 @@ curl -X POST http://localhost:3000/api/ac/send \
 
 ## Web UI
 
-After `npm start`, open **http://localhost:3000**
-
-- Gateway status (online/offline)
-- TV quick actions
-- AC mode, temperature, and fan controls
+See [How to use → Web UI](#2-web-ui).
 
 ---
 
-## MCP server (Cursor / Claude Desktop)
+## MCP server (reference)
 
-The MCP server exposes chat tools for TV and AC control. It reads `.env` from the project root.
+Tools exposed to Cursor / Claude Desktop. For day-to-day use, just ask in chat — see [How to use → Cursor](#1-cursor--claude--just-ask-recommended).
 
 ### Tools
 
@@ -223,30 +350,22 @@ The MCP server exposes chat tools for TV and AC control. It reads `.env` from th
 | `ac_set_mode` | Set mode by name |
 | `list_commands` | Show available commands |
 
-### Cursor setup
-
-1. Open **Cursor Settings → MCP**
-2. Add a server (or copy `mcp/cursor-mcp.example.json`):
+### Cursor config
 
 ```json
 {
   "mcpServers": {
     "casa-inteligente": {
       "command": "node",
-      "args": ["/absolute/path/to/casa-inteligente/mcp/server.js"]
+      "args": ["/absolute/path/to/positivo-pcuirn/mcp/server.js"]
     }
   }
 }
 ```
 
-Use an **absolute path** in `args`. The server loads `.env` automatically via `dotenv`.
-
-3. Restart Cursor
-4. Try: *"turn on the AC at 23 degrees"*
-
 ### Claude Desktop
 
-Same config block in `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
+Same config in `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS).
 
 ---
 

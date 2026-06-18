@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "casa-inteligente": {
+      "command": "node",
+      "args": ["/absolute/path/to/casa-inteligente/mcp/server.js"]
+    }
+  }
+}

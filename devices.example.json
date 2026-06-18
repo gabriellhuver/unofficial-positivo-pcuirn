@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Smart Controle Universal 2",
+    "deviceId": "your_gateway_device_id",
+    "localKey": "your_local_key_from_api",
+    "ip": "192.168.x.x",
+    "productId": "lwpag3bu0faaowlj",
+    "online": true,
+    "category": "wnykq",
+    "isGateway": true
+  },
+  {
+    "name": "TV",
+    "deviceId": "your_tv_remote_id",
+    "localKey": null,
+    "ip": null,
+    "productId": "ZAx1jolkKaiu8JtM",
+    "online": true
+  },
+  {
+    "name": "Ar condicionado",
+    "deviceId": "your_ac_remote_id",
+    "localKey": null,
+    "ip": null,
+    "productId": "jllh2kdbGM0QTdf1",
+    "online": true
+  }
+]

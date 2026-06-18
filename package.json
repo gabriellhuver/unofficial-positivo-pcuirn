@@ -1,0 +1,32 @@
+{
+  "name": "casa-inteligente-pcuirn",
+  "version": "1.0.0",
+  "description": "Controle do Positivo PCUIRN — API, MCP e UI",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "discover": "node discover.js",
+    "positivo": "node positivo.js",
+    "probe": "node probe.js",
+    "test": "node test-control.js",
+    "mcp": "node mcp/server.js",
+    "frontend:install": "cd frontend && npm install",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "build": "npm run frontend:install && npm run frontend:build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@tuya/tuya-connector-nodejs": "^2.1.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "tuyapi": "^7.7.0",
+    "zod": "^3.24.1"
+  }
+}
